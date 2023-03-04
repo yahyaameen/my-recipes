@@ -7,7 +7,7 @@ const isRecipeContainGlutenAndDairy = function(ingredients, dairyIngredients, gl
     for (const ingredient of ingredients) {
         const splitIngredient = ingredient.split(' ')
         for (const ingredientSubString of splitIngredient) {
-            if (dairyAndGluten.includes(ingredientSubString.charAt(0).toUpperCase() + ingredientSubString.slice(1))) {
+            if (dairyAndGluten.includes(ingredientSubString.toLocaleLowerCase())) {
                 return true
             }
         }
@@ -19,7 +19,7 @@ const isRecipeContainDairy = function(ingredients, dairyIngredients) {
     for (const ingredient of ingredients) {
         const splitIngredient = ingredient.split(' ')
         for (const ingredientSubString of splitIngredient) {
-            if (dairyIngredients.includes(ingredientSubString.charAt(0).toUpperCase() + ingredientSubString.slice(1))) {
+            if (dairyIngredients.includes(ingredientSubString.toLocaleLowerCase())) {
                 return true
             }
         }
@@ -31,7 +31,7 @@ const isRecipeContainGluten = function(ingredients, glutenIngredients) {
     for (const ingredient of ingredients) {
         const splitIngredient = ingredient.split(' ')
         for (const ingredientSubString of splitIngredient) {
-            if (glutenIngredients.includes(ingredientSubString.charAt(0).toUpperCase() + ingredientSubString.slice(1))) {
+            if (glutenIngredients.includes(ingredientSubString.toLocaleLowerCase())) {
                 return true
             }
         }
@@ -41,13 +41,15 @@ const isRecipeContainGluten = function(ingredients, glutenIngredients) {
 
 const isRecipeContainSensitivityFilters = function(recipe, dairyFilter, glutenFilter) {
     const dairyIngredients = ["Cream", "Cheese", "Milk", "Butter", "Creme", "Ricotta", "Mozzarella", "Custard", "Cream Cheese"]
-    const glutenIngredients = ["Flour", "Bread", "Spaghetti", "Biscuits", "Beer"]
+    const glutenIngredients = ["Flour", "Bread", "spaghetti", "Biscuits", "Beer"]
+    const dairyIngredientsLowerCase = dairyIngredients.map(d => d.toLocaleLowerCase())
+    const glutenIngredientsLowerCase = glutenIngredients.map(g => g.toLocaleLowerCase())
     if (dairyFilter === 'true' && glutenFilter === 'true') {
-        return isRecipeContainGlutenAndDairy(recipe.ingredients, dairyIngredients, glutenIngredients)
+        return isRecipeContainGlutenAndDairy(recipe.ingredients, dairyIngredientsLowerCase, glutenIngredientsLowerCase)
     } else if (dairyFilter === 'true' && glutenFilter === 'false') {
-        return isRecipeContainDairy(recipe.ingredients, dairyIngredients)
+        return isRecipeContainDairy(recipe.ingredients, dairyIngredientsLowerCase)
     } else {
-        return isRecipeContainGluten(recipe.ingredients, glutenIngredients)
+        return isRecipeContainGluten(recipe.ingredients, glutenIngredientsLowerCase)
     }
 }
 
