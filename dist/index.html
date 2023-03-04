@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Recipes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" media="screen" href="style.css" />
+</head>
+
+<body>
+    <div id="new-recipes">
+        <input type="text" id="new-recipes-input" placeholder="ingredient" />
+        <br>
+        <div>
+            <input type="checkbox" name="sensitivity-filter" id="dairy" value="dairy ingredients">
+            <label for="dairy">dairy ingredients</label><br>
+            <input type="checkbox" name="sensitivity-filter" id="gluten" value="gluten ingredients">
+            <label for="gluten">gluten ingredients</label><br>
+        </div><br>
+        <button id="show-recipes">Show Recipes</button>
+    </div>
+
+    <div id="recipes"></div>
+
+    <script id="recipes-template" type="text/x-handlebars-template">
+        {{#each recipes}}
+        <div class="recipe">
+            <h3>{{title}}</h3>
+            <p>{{idMeal}}</p>
+            <img src={{thumbnail}}>
+            <a href={{href}}>Recipe Video</a>
+            <ul class="ingredients">
+                {{#each ingredients}}
+                <li>{{this}}</li>
+                {{/each}}
+            </ul>
+        </div>
+        {{/each}}
+    </script>
+
+    <script src="./jquery/dist/jquery.js"></script>
+    <script src="./handlebars/dist/handlebars.js"></script>
+    <script src="RecipesModel.js"></script>
+    <script src="Renderer.js"></script>
+    <script src="main.js"></script>
+</body>
+
+</html>
