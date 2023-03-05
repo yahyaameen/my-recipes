@@ -24,6 +24,20 @@
 
     <div id="recipes"></div>
 
+    <nav class="pagination-container">
+        <button class="pagination-button" id="prev-button" title="Previous page" aria-label="Previous page">
+          &lt;
+        </button>
+
+        <div id="pagination-numbers">
+        </div>
+
+        <button class="pagination-button" id="next-button" title="Next page" aria-label="Next page">
+          &gt;
+        </button>
+    </nav>
+
+
     <script id="recipes-template" type="text/x-handlebars-template">
         {{#each recipes}}
         <div class="recipe">
@@ -31,7 +45,7 @@
             <p>{{idMeal}}</p>
             <img src={{thumbnail}}>
             <a href={{href}}>Recipe Video</a>
-            <ul class="ingredients">
+            <ul id="ingredients">
                 {{#each ingredients}}
                 <li>{{this}}</li>
                 {{/each}}
