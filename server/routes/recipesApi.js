@@ -1,47 +1,36 @@
 const express = require('express')
 const axios = require('axios')
 const router = express.Router()
+const sensitivityData = require('./sensitivityData')
+
+const isRecipeIngredientsContainSensitivityFilters = function(SensitivityDataArray, ingredients) {
+    for (const ingredient of ingredients) {
+        const splitIngredient = ingredient.split(' ')
+        for (const ingredientSubString of splitIngredient) {
+            if (SensitivityDataArray.includes(ingredientSubString.toLowerCase())) {
+                return true
+            }
+        }
+    }
+    return false
+}
 
 const isRecipeContainGlutenAndDairy = function(ingredients, dairyIngredients, glutenIngredients) {
     const dairyAndGluten = dairyIngredients.concat(glutenIngredients)
-    for (const ingredient of ingredients) {
-        const splitIngredient = ingredient.split(' ')
-        for (const ingredientSubString of splitIngredient) {
-            if (dairyAndGluten.includes(ingredientSubString.toLowerCase())) {
-                return true
-            }
-        }
-    }
-    return false
+    return isRecipeIngredientsContainSensitivityFilters(dairyAndGluten, ingredients)
 }
 
 const isRecipeContainDairy = function(ingredients, dairyIngredients) {
-    for (const ingredient of ingredients) {
-        const splitIngredient = ingredient.split(' ')
-        for (const ingredientSubString of splitIngredient) {
-            if (dairyIngredients.includes(ingredientSubString.toLowerCase())) {
-                return true
-            }
-        }
-    }
-    return false
+    return isRecipeIngredientsContainSensitivityFilters(dairyIngredients, ingredients)
 }
 
 const isRecipeContainGluten = function(ingredients, glutenIngredients) {
-    for (const ingredient of ingredients) {
-        const splitIngredient = ingredient.split(' ')
-        for (const ingredientSubString of splitIngredient) {
-            if (glutenIngredients.includes(ingredientSubString.toLowerCase())) {
-                return true
-            }
-        }
-    }
-    return false
+    return isRecipeIngredientsContainSensitivityFilters(glutenIngredients, ingredients)
 }
 
 const isRecipeContainSensitivityFilters = function(recipe, dairyFilter, glutenFilter) {
-    const dairyIngredients = ["Cream", "Cheese", "Milk", "Butter", "Creme", "Ricotta", "Mozzarella", "Custard", "Cream Cheese"]
-    const glutenIngredients = ["Flour", "Bread", "spaghetti", "Biscuits", "Beer"]
+    const dairyIngredients = sensitivityData.dairyIngredients
+    const glutenIngredients = sensitivityData.glutenIngredients
     const dairyIngredientsLowerCase = dairyIngredients.map(d => d.toLowerCase())
     const glutenIngredientsLowerCase = glutenIngredients.map(g => g.toLowerCase())
     if (dairyFilter === 'true' && glutenFilter === 'true') {
@@ -65,27 +54,83 @@ const filteringRecipesBySensitivity = function(filteringRecipes, dairyFilter, gl
     }
     return filteringRecipesBySensitivity
 }
+
+const recipesPagination = function(recipesArray, recipesStartIndex, recipesLastIndex) {
+    let paginationRecipesArray = []
+    for (const index in recipesArray) {
+        if (index >= recipesStartIndex && index <= recipesLastIndex) {
+            paginationRecipesArray.push(recipesArray[index]);
+        }
+    }
+    return paginationRecipesArray
+};
+
+const isPrevPaginationEnable = function(recipesStartIndex) {
+    const FIRST_INDEX = 0
+    return recipesStartIndex > FIRST_INDEX ? true : false
+}
+
+const isNextPaginationEnable = function(recipesArray, recipesLastIndex) {
+    return recipesLastIndex < (recipesArray.length - 1) ? true : false
+}
+
+const getFilteringRecipes = function(recipes) {
+    return recipes.map(r => ({
+        "idMeal": r.idMeal,
+        "title": r.title,
+        "thumbnail": r.thumbnail,
+        "href": r.href,
+        "ingredients": r.ingredients
+    }))
+}
+
+const sendingRecipesData = function(parameters) {
+    let paginationRecipesArray = []
+    let isNextPagination = undefined
+    let isPrevPagination = undefined
+    if (parameters.dairyFilter === 'true' || parameters.glutenFilter === 'true') {
+        paginationRecipesArray = recipesPagination(parameters.filteringRecipesArrayBySensitivity, parameters.recipesStartIndex, parameters.recipesLastIndex)
+        isNextPagination = isNextPaginationEnable(parameters.filteringRecipesArrayBySensitivity, parameters.recipesLastIndex)
+        isPrevPagination = isPrevPaginationEnable(parameters.recipesStartIndex)
+        parameters.res.send({
+            recipes: paginationRecipesArray,
+            isPrevPagination: isPrevPagination,
+            isNextPagination: isNextPagination
+        })
+    } else {
+        paginationRecipesArray = recipesPagination(parameters.filteringRecipes, parameters.recipesStartIndex, parameters.recipesLastIndex)
+        isNextPagination = isNextPaginationEnable(parameters.filteringRecipes, parameters.recipesLastIndex)
+        isPrevPagination = isPrevPaginationEnable(parameters.recipesStartIndex)
+        parameters.res.send({
+            recipes: paginationRecipesArray,
+            isPrevPagination: isPrevPagination,
+            isNextPagination: isNextPagination
+        })
+    }
+}
+
 router.get('/recipes/:ingredient', (req, res) => {
     const ingredient = req.params.ingredient
+    const recipesStartIndex = parseInt(req.query.recipesStartIndex)
+    const recipesLastIndex = parseInt(req.query.recipesLastIndex)
+    const dairyFilter = req.query.dairyFilter
+    const glutenFilter = req.query.glutenFilter
+    let filteringRecipesArrayBySensitivity = []
     axios.get(`https://recipes-goodness-elevation.herokuapp.com/recipes/ingredient/${ingredient}`)
         .then(function(response) {
             const recipes = response.data.results
-            const filteringRecipes = recipes.map(r => ({
-                "idMeal": r.idMeal,
-                "title": r.title,
-                "thumbnail": r.thumbnail,
-                "href": r.href,
-                "ingredients": r.ingredients
-            }))
-            const dairyFilter = req.query.dairyFilter
-            const glutenFilter = req.query.glutenFilter
-            let filteringRecipesArrayBySensitivity = []
+            const filteringRecipes = getFilteringRecipes(recipes)
             filteringRecipesArrayBySensitivity = filteringRecipesBySensitivity(filteringRecipes, dairyFilter, glutenFilter)
-            if (filteringRecipesArrayBySensitivity.length !== 0) {
-                res.send({ recipes: filteringRecipesArrayBySensitivity })
-            } else {
-                res.send({ recipes: filteringRecipes })
+            const sendingRecipesDataParameters = {
+                res: res,
+                dairyFilter: dairyFilter,
+                glutenFilter: glutenFilter,
+                filteringRecipesArrayBySensitivity: filteringRecipesArrayBySensitivity,
+                filteringRecipes: filteringRecipes,
+                recipesStartIndex: recipesStartIndex,
+                recipesLastIndex: recipesLastIndex
             }
+            sendingRecipesData(sendingRecipesDataParameters)
         })
 })
 

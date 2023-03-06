@@ -47,7 +47,6 @@
     justify-content: center;
 }
 
-.pagination-number,
 .pagination-button {
     font-size: 1.1rem;
     background-color: transparent;
@@ -59,12 +58,6 @@
     border-radius: .2rem;
 }
 
-.pagination-number:hover,
 .pagination-button:not(.disabled):hover {
     background: #fff;
-}
-
-.pagination-number.active {
-    color: #fff;
-    background: #0085b6;
 }
